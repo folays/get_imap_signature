@@ -259,7 +259,7 @@ sub imap_read_lsub($$$)
 	&imap_write($d, 'list "" "*"');
 	$d->{state} = "list";
     }
-    elsif (!$code && $line =~ m/^LSUB \((.*)\) "([\/.])" (?|([^"\s]+)|"([^"]+)")?$/o)
+    elsif (!$code && $line =~ m/^(?:LSUB|LIST) \((.*)\) "([\/.])" (?|([^"\s]+)|"([^"]+)")?$/o)
     {
 	push @{$d->{folders_lsub}}, {name => $3, separator => $2, flags => $1};
 	1;
