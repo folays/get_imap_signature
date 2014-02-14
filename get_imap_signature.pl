@@ -47,9 +47,12 @@ GetOptions("quiet", => \$quiet,
 	   "pw=s" => \$long_opts{pw},
 	   "mode=s", \$long_opts{mode},
 	   "skip-flag", \$long_opts{skip_flag},
+	   "body" => \$long_opts{fetch_body},
     ) or &logfail("bad options");
 
 die "no login or pw" unless $long_opts{login} && $long_opts{pw};
+
+die if $long_opts{sockets} > $long_opts{max};
 
 my $sel_r = IO::Select->new();
 my $sel_w = IO::Select->new();
@@ -77,6 +80,8 @@ $SIG{INT} = sub
 
 while (1)
 {
+    last if $total == $long_opts{max};
+
 #    print "SELECT on ".$sel_r->count()."\n";
     my ($r, $w) = IO::Select->select($sel_r, $sel_w, undef);
     foreach (@$r)
@@ -132,6 +137,7 @@ sub do_read
 	$sel_r->remove($s);
 	$sel_w->remove($s);
 	delete $sockets{$s};
+	++$total;
 	&imap_start_thread if scalar(keys %sockets) < ($long_opts{max} - $total);
     }
     &filter_read($sockets{$s}, \$buf);
@@ -294,7 +300,10 @@ sub imap_read_examine($$$)
 
     if ($code && $line =~ m/^OK /o)
     {
-	&imap_write($d, "uid fetch 1:* (FLAGS)");
+	my $fetch_items = join(" ", qw(FLAGS),
+			 $long_opts{fetch_body} ? "BODY" : (),
+	    );
+	&imap_write($d, "uid fetch 1:* ($fetch_items)");
 	$d->{cur_hash} = 0;
 	die unless $d->{uid_validity} && $d->{uid_next};
 	$d->{state} = "uid";
