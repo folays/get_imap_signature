@@ -333,7 +333,7 @@ sub imap_read_uid($$$)
 	{
 	    my $folder = $d->{folders_list}->[$d->{folder_list_n}++];
 
-	    next if $folder->{flags} =~ m/\\NoSelect/o;
+	    next if $folder->{flags} =~ m/\\NoSelect/oi;
 
 	    $d->{cur_folder} = $folder->{name};
 	    &imap_write($d, 'examine "'.$d->{cur_folder}.'"');
